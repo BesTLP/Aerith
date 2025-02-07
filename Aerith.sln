@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aerith", "Aerith\Aerith.vcxproj", "{EFB910F4-1CC6-4DBB-A31B-1CD6768ABFD5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sandbox\Sandbox.vcxproj", "{413BBC72-F086-48E3-8A2A-02BEB375925C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EFB910F4-1CC6-4DBB-A31B-1CD6768ABFD5}.Debug|x64.ActiveCfg = Debug|x64
+		{EFB910F4-1CC6-4DBB-A31B-1CD6768ABFD5}.Debug|x64.Build.0 = Debug|x64
+		{EFB910F4-1CC6-4DBB-A31B-1CD6768ABFD5}.Release|x64.ActiveCfg = Release|x64
+		{EFB910F4-1CC6-4DBB-A31B-1CD6768ABFD5}.Release|x64.Build.0 = Release|x64
+		{413BBC72-F086-48E3-8A2A-02BEB375925C}.Debug|x64.ActiveCfg = Debug|x64
+		{413BBC72-F086-48E3-8A2A-02BEB375925C}.Debug|x64.Build.0 = Debug|x64
+		{413BBC72-F086-48E3-8A2A-02BEB375925C}.Release|x64.ActiveCfg = Release|x64
+		{413BBC72-F086-48E3-8A2A-02BEB375925C}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6FB60CBB-4ACA-41F7-9CB0-98BEC7A07FFF}
+	EndGlobalSection
+EndGlobal
