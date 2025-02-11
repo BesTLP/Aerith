@@ -18,6 +18,10 @@ workspace "Aerith"
 		targetdir("bin/" .. outputdir .. "/%{prj.name}")
 		objdir("bin-int/" .. outputdir .. "/%{prj.name}")
 
+
+		pchheader "AerithPch.h"
+		pchsource "Aerith/src/AerithPch.cpp"
+
 		files
 		{
 			"%{prj.name}/src/**.h",
@@ -27,6 +31,7 @@ workspace "Aerith"
 
 		includedirs
 		{
+			"%{prj.name}/src",
 			"%{prj.name}/vendor/spdlog/include"
 		}
 
