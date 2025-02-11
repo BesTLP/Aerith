@@ -8,3 +8,5 @@
 #else 
 	#error Only Support Windows Now.
 #endif // AERITH_PLATFORM_WINDOWS
+
+#define BIT(x) (1 << x)

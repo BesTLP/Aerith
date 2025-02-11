@@ -1,6 +1,9 @@
 #pragma once
+
 #include "Core.h"
+
 #include "spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"
 
 namespace Aerith
 {
@@ -37,9 +40,9 @@ namespace Aerith
 
 
 // Client Log Macros
-#define AERITH_CLIENT_TRACE(...)	::Aerith::Log::GetClientLogger()->trace(__VA_ARGS__);
-#define AERITH_CLIENT_DEBUG(...)	::Aerith::Log::GetClientLogger()->debug(__VA_ARGS__);
-#define AERITH_CLIENT_INFO(...)		::Aerith::Log::GetClientLogger()->info(__VA_ARGS__);
-#define AERITH_CLIENT_WARN(...)		::Aerith::Log::GetClientLogger()->warn(__VA_ARGS__);
-#define AERITH_CLIENT_ERROR(...)	::Aerith::Log::GetClientLogger()->error(__VA_ARGS__);
-#define AERITH_CLIENT_CRITICAL(...)	::Aerith::Log::GetClientLogger()->critical(__VA_ARGS__);
+#define AERITH_TRACE(...)			::Aerith::Log::GetClientLogger()->trace(__VA_ARGS__);
+#define AERITH_DEBUG(...)			::Aerith::Log::GetClientLogger()->debug(__VA_ARGS__);
+#define AERITH_INFO(...)			::Aerith::Log::GetClientLogger()->info(__VA_ARGS__);
+#define AERITH_WARN(...)			::Aerith::Log::GetClientLogger()->warn(__VA_ARGS__);
+#define AERITH_ERROR(...)			::Aerith::Log::GetClientLogger()->error(__VA_ARGS__);
+#define AERITH_CRITICAL(...)		::Aerith::Log::GetClientLogger()->critical(__VA_ARGS__);
