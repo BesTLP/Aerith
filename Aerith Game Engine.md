@@ -560,3 +560,578 @@ public:
 
 # 预编译头文件
 
+# 抽象窗口类
+
+为每个平台创建一个单独的窗口类。
+
+### `Window.h`
+
+```c++
+namespace Aerith
+{
+    struct WindowProps
+    {
+        std::string Title;
+        unsigned int Width;
+        unsigned int Height;
+
+        WindowProps(const std::string& title = "Aerith Engine",
+            unsigned int width = 1280,
+            unsigned int height = 720)
+            : Title(title), Width(width), Height(height)
+        {
+        }
+    };
+```
+
+- `WindowProps`：定义了一个结构体来封装窗口的属性。包含窗口的标题、宽度和高度，构造函数允许初始化默认值。
+
+`Window` 类是一个接口类，定义了窗口系统的基本功能，包括：
+
+- `OnUpdate`：窗口的更新操作。
+- `GetWidth`、`GetHeight`：获取窗口的宽高。
+- `SetEventCallback`：设置事件回调。
+- `SetVSync` 和 `IsVSync`：设置和检查V-Sync（垂直同步）是否启用。
+- `Create`：一个静态工厂函数，根据`WindowProps`创建窗口实例，由子类，比如WindowsWindow，MacWindow去实现
+
+```c++
+class AERITH_API Window
+{
+public:
+	using EventCallbackFn = std::function<void(Event&)>;
+
+	virtual ~Window() {}
+
+	virtual void OnUpdate() = 0;
+
+	virtual unsigned int GetWidth() const = 0;
+	virtual unsigned int GetHeight() const = 0;
+
+	virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
+	virtual void SetVSync(bool enabled) = 0;
+	virtual bool IsVSync() const = 0;
+
+	static Window* Create(const WindowProps& Props = WindowProps());
+
+};
+```
+
+### 第二个文件：`WindowsWindow.h`
+
+```c++
+#pragma once
+#include "Aerith/Window.h"
+#include <GLFW/glfw3.h>
+```
+
+- 引入`Window`接口和GLFW库。
+
+```c++
+namespace Aerith
+{
+    class WindowsWindow : public Window
+    {
+    public:
+        WindowsWindow(const WindowProps& props);
+        virtual ~WindowsWindow();
+
+        void OnUpdate() override;
+        inline unsigned int GetWidth() const override { return m_Data.Width; }
+        inline unsigned int GetHeight() const override { return m_Data.Height; }
+        inline void SetEventCallback(const EventCallbackFn& callback) override { m_Data.EventCallback = callback; };
+        void SetVSync(bool enabled);
+        bool IsVSync() const;
+
+    private:
+        virtual void Init(const WindowProps& props);
+        virtual void Shutdown();
+    private:
+        GLFWwindow* m_Window;
+        struct WindowData
+        {
+            std::string Title;
+            unsigned int Width, Height;
+            bool VSync;
+            EventCallbackFn EventCallback;
+        };
+        WindowData m_Data;
+    };
+}
+```
+
+- `WindowsWindow` 类继承自`Window`，具体实现了该接口，表示GLFW平台下的窗口管理。
+- 成员函数：
+  - `OnUpdate`：更新窗口，处理事件。
+  - `GetWidth`、`GetHeight`：返回窗口的宽高。
+  - `SetEventCallback`：设置事件回调。
+  - `SetVSync`、`IsVSync`：设置和检查V-Sync的状态。
+  - `Init`：初始化窗口。
+  - `Shutdown`：销毁窗口。
+
+### 第三个文件：`WindowsWindow.cpp`
+
+```c++
+#include "AerithPch.h"
+#include "WindowsWindow.h"
+```
+
+- 包含了预编译头文件和Windows窗口实现文件。
+
+```c++
+	static bool s_GLFWInitialized = false;
+```
+
+- `s_GLFWInitialized` 是一个静态变量，用于确保GLFW库只初始化一次。
+
+```c++
+    Window* Window::Create(const WindowProps& props)
+    {
+        return new WindowsWindow(props);
+    }
+```
+
+- `Window::Create` 工厂函数，返回一个`WindowsWindow`实例。
+
+```c++
+    WindowsWindow::WindowsWindow(const WindowProps& props)
+    {
+        Init(props);
+    }
+```
+
+- `WindowsWindow` 构造函数，调用`Init`初始化窗口。
+
+```c++
+    WindowsWindow::~WindowsWindow()
+    {
+        Shutdown();
+    }
+```
+
+- 析构函数，调用`Shutdown`销毁窗口。
+
+```c++
+    void WindowsWindow::Init(const WindowProps& props)
+    {
+        m_Data.Title = props.Title;
+        m_Data.Width = props.Width;
+        m_Data.Height = props.Height;
+
+        AERITH_CORE_INFO("Creating window {0} ({1},{2})", props.Title, props.Width, props.Height);
+```
+
+- `Init`方法初始化窗口的数据成员，并输出窗口创建的信息。
+
+```c++
+        if (!s_GLFWInitialized)
+        {
+            int success = glfwInit();
+            AERITH_CORE_ASSERT(success, "Could not initialize GLFW!");
+
+            s_GLFWInitialized = true;
+        }
+
+
+#ifdef AERITH_ENABLE_ASSERTS	
+	#define AERITH_ASSERT(x, ...) {if(!(x)){AERITH_ERROR("Assertion Failed: {0}", __VA_ARGS__);__debugbreak();}}
+	#define AERITH_CORE_ASSERT(x, ...){if(!(x)){AERITH_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);__debugbreak();}}
+#else
+	#define AERITH_ASSERT(x, ...)
+	#define AERITH_CORE_ASSERT(x, ...)
+#endif // 
+```
+
+- 如果GLFW还未初始化，调用`glfwInit`初始化GLFW，并设置`GLFWInitialized`标志。
+
+```c++
+        m_Window = glfwCreateWindow((int)m_Data.Width, (int)m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
+        glfwMakeContextCurrent(m_Window);
+        glfwSetWindowUserPointer(m_Window, &m_Data);
+        SetVSync(true);
+    }
+```
+
+- 创建GLFW窗口，设置窗口的上下文（即OpenGL上下文），并将窗口数据结构绑定到窗口用户指针上，最后开启V-Sync。
+
+```c++
+    void WindowsWindow::Shutdown()
+    {
+        glfwDestroyWindow(m_Window);
+    }
+```
+
+- 销毁GLFW窗口。
+
+```c++
+    void WindowsWindow::OnUpdate()
+    {
+        glfwPollEvents();
+        glfwSwapBuffers(m_Window);
+    }
+```
+
+- `OnUpdate`：调用`glfwPollEvents`处理所有待处理的事件（例如输入事件），然后交换缓冲区，更新窗口内容。
+
+```c++
+    void WindowsWindow::SetVSync(bool enabled)
+    {
+        if (enabled)
+            glfwSwapInterval(1); // 开启V-Sync
+        else
+            glfwSwapInterval(0); // 关闭V-Sync
+
+        m_Data.VSync = enabled;
+    }
+```
+
+- 设置V-Sync的状态，调用`glfwSwapInterval`来控制垂直同步。
+
+```c++
+    bool WindowsWindow::IsVSync() const
+    {
+        return m_Data.VSync;
+    }
+}
+```
+
+- 返回当前V-Sync的状态。
+
+# 设置窗口事件
+
+## EventCallbackFn 
+
+`using EventCallbackFn = std::function<void(Event&)>;` 
+
+### 1. **`std::function` 的概念**：
+
+`std::function` 是 C++ 标准库提供的一个模板类，用来封装任何可调用对象（如普通函数、成员函数、函数指针、Lambda 表达式等）。它提供了一种通用的方式来处理函数对象，使得你可以通过统一的接口来调用这些不同类型的可调用对象。
+
+### 2. **`using` 关键字**：
+
+`using` 是 C++11 引入的一个别名声明，它用于为类型定义一个新的名字。你可以把 `using` 看作是 `typedef` 的一个更现代的替代方式。
+
+```c++
+using EventCallbackFn = std::function<void(Event&)>;
+```
+
+这行代码的意思是，定义了一个新的类型别名 `EventCallbackFn`，它实际上是 `std::function<void(Event&)>` 的别名。
+
+### 3. **`std::function<void(Event&)>`**：
+
+`std::function<void(Event&)>` 表示一个函数对象，它是一个接受 `Event&` 类型的参数并且没有返回值（`void`）的函数。
+
+具体来说：
+
+- `std::function<void(Event&)>` 可以封装任何接受 `Event&` 参数并返回 `void` 的可调用对象。
+- 这个可调用对象可以是普通函数、成员函数、Lambda 表达式或者函数指针。
+
+### 4. **如何使用 `EventCallbackFn`**：
+
+`EventCallbackFn` 定义后，你可以像使用任何其他类型一样使用它。它可以用于存储函数、Lambda 表达式或其他可调用对象，目的是用它来存储一个函数或回调，稍后在事件触发时调用。
+
+#### 示例 1: 使用普通函数
+
+假设你有一个普通的事件处理函数：
+
+```c++
+void HandleEvent(Event& e) {
+    std::cout << "Handling event: " << e.GetName() << std::endl;
+}
+```
+
+你可以将 `HandleEvent` 函数绑定到 `EventCallbackFn` 上：
+
+```c++
+EventCallbackFn callback = HandleEvent;
+```
+
+当你想调用这个回调时，只需要：
+
+```c++
+Event event;
+callback(event);  // 调用 HandleEvent(event)
+```
+
+#### 示例 2: 使用 Lambda 表达式
+
+你也可以将 Lambda 表达式赋值给 `EventCallbackFn`：
+
+```c++
+EventCallbackFn callback = [](Event& e) {
+    std::cout << "Lambda handling event: " << e.GetName() << std::endl;
+};
+```
+
+然后像上面一样调用回调：
+
+```c++
+Event event;
+callback(event);  // 调用 Lambda 处理事件
+```
+
+#### 示例 3: 使用成员函数
+
+你还可以用成员函数来处理事件。假设你有一个类 `Application`，它有一个成员函数 `OnEvent`：
+
+```c++
+class Application {
+public:
+    void OnEvent(Event& e) {
+        std::cout << "Application handling event: " << e.GetName() << std::endl;
+    }
+};
+```
+
+你可以使用 `std::bind` 来绑定成员函数：
+
+```
+Application app;
+EventCallbackFn callback = std::bind(&Application::OnEvent, &app, std::placeholders::_1);
+```
+
+然后你可以通过 `callback` 调用 `OnEvent`：
+
+```
+Event event;
+callback(event);  // 调用 Application::OnEvent(event)
+```
+
+- `using EventCallbackFn = std::function<void(Event&)>;` 定义了一个新的类型别名，表示一个接收 `Event&` 参数并返回 `void` 的回调函数类型。
+- 你可以将任何符合这个签名的可调用对象（如函数、成员函数、Lambda）赋值给 `EventCallbackFn` 类型的变量。
+- 当事件发生时，你可以通过这个回调函数对象来执行相应的事件处理逻辑。
+
+通过 `std::function` 和 `using`，你可以方便地实现高灵活性的回调机制，并使得代码更加模块化和可扩展。
+
+## 设置回调函数
+
+我们可以在窗口的`Init`里面重写各种回调函数
+
+以`SetWindowSizeCallback`为例
+
+这是GLFW官方提供的API，我们基本上是为了覆写对应的函数，可以通过lambda函数来编写
+
+```c++
+GLFWAPI GLFWwindowsizefun glfwSetWindowSizeCallback(GLFWwindow* handle,
+                                                    GLFWwindowsizefun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP(GLFWwindowsizefun, window->callbacks.size, cbfun);
+    return cbfun;
+}
+```
+
+我们需要提供一个GLFWwindowsizefun，其形式如下：
+
+```c++
+typedef void (* GLFWwindowsizefun)(GLFWwindow* window, int width, int height);
+```
+
+示例代码演示了如何使用GLFW提供的`SetWindowSizeCallback`来处理窗口大小变化事件。在GLFW中，窗口相关的事件（如大小变化、键盘输入等）通常通过回调函数来处理，回调函数允许你在事件发生时执行自定义的逻辑。
+
+### 1. **定义回调函数类型**
+
+```c++
+typedef void (* GLFWwindowsizefun)(GLFWwindow* window, int width, int height);
+```
+
+这行代码定义了一个回调函数的类型`GLFWwindowsizefun`，它接收三个参数：
+
+- `GLFWwindow* window`：窗口对象的指针。
+- `int width`：窗口的新宽度。
+- `int height`：窗口的新高度。
+
+### 2. **设置窗口大小回调**
+
+通过调用`glfwSetWindowSizeCallback`，你可以为窗口注册一个回调函数，这样在窗口大小发生变化时，GLFW会自动调用这个回调函数。
+
+```c++
+glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    data.Width = width;
+    data.Height = height;
+
+    WindowResizeEvent event(width, height);
+    data.EventCallback(event);
+});
+```
+
+这里用lambda表达式定义了回调函数。当窗口大小变化时，会触发这个lambda函数。
+
+- `window`：表示当前窗口。
+- `width` 和 `height`：表示新的窗口大小。
+
+### 3. **存储并更新窗口尺寸**
+
+```c++
+WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+data.Width = width;
+data.Height = height;
+```
+
+`glfwGetWindowUserPointer`用于获取与窗口相关联的用户数据。`WindowData`是用户自定义的结构体，它保存了窗口的宽度和高度等信息。通过`data.Width`和`data.Height`更新窗口的新尺寸。
+
+### 4. **触发事件回调**
+
+```
+WindowResizeEvent event(width, height);
+data.EventCallback(event);
+```
+
+在窗口尺寸改变时，创建一个`WindowResizeEvent`事件，并通过`EventCallback`触发事件，通知系统或应用处理窗口大小变化的逻辑。
+
+`WindowsWindow::OnUpdate()`方法通过调用 `glfwPollEvents()` 来处理所有的事件，包括用户的输入、窗口事件等。这是一个常见的做法，用于确保事件回调能够持续被触发并被处理。
+
+```c++
+void WindowsWindow::OnUpdate()
+{
+    glfwPollEvents();    // 轮询所有事件
+    glfwSwapBuffers(m_Window);  // 交换缓冲区以显示渲染结果
+}
+```
+
+`glfwPollEvents()`：
+
+- 这个函数会触发所有待处理的事件回调。它会遍历事件队列，处理诸如键盘输入、鼠标输入、窗口大小调整、窗口关闭等事件。
+- 在调用了`glfwPollEvents()`之后，所有注册的事件回调（比如`SetWindowSizeCallback`、`SetKeyCallback`等）会被触发。这时，像你在`Application::OnEvent`中定义的事件回调（比如窗口关闭事件）也会被调用。
+
+`glfwSwapBuffers(m_Window)`：
+
+- 这个函数负责交换前后缓冲区，将渲染结果显示到窗口上。一般来说，`glfwPollEvents()`和`glfwSwapBuffers()`是渲染循环中的两个重要步骤，前者处理事件，后者更新显示。
+
+## 整个回调机制的流程
+
+实际上，调用 `data.EventCallback(event)` 就是执行了 `EventCallbackFn` 类型的函数指针（`using EventCallbackFn = std::function<void(Event&)>`），而这个指针指向的是通过 `m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent))` 设置的回调函数。
+
+### 1. **`EventCallbackFn` 是一个函数类型别名：**
+
+你定义了 `EventCallbackFn` 类型别名，它是一个可以接收 `Event&` 作为参数并返回 `void` 的函数类型：
+
+```c++
+using EventCallbackFn = std::function<void(Event&)>;
+```
+
+### 2. **`SetEventCallback` 存储回调函数：**
+
+`WindowsWindow` 中的 `SetEventCallback` 函数接收一个 `EventCallbackFn` 类型的回调函数并将其保存在 `m_Data.EventCallback` 中：
+
+```c++
+void WindowsWindow::SetEventCallback(const EventCallbackFn& callback) {
+    m_Data.EventCallback = callback;
+}
+```
+
+### 3. **`BIND_EVENT_FN(OnEvent)` 生成回调函数：**
+
+在 `Application` 构造函数中，调用了 `SetEventCallback(BIND_EVENT_FN(OnEvent))`。
+
+这实际上是通过 `BIND_EVENT_FN` 宏将 `Application::OnEvent` 方法绑定到回调函数上，并返回一个 `std::function<void(Event&)>` 类型的函数对象：
+
+```c++
+m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
+```
+
+- `BIND_EVENT_FN(OnEvent)` 实际上会创建一个 `std::bind` 返回的函数对象，这个对象会调用 `Application::OnEvent`，并自动传入事件对象 `Event&`。
+- 这就意味着，当事件发生时，`m_Data.EventCallback` 会调用 `OnEvent`。
+
+### 4. **`data.EventCallback(event)` 调用回调：**
+
+当 GLFW 捕获到事件并触发回调时（比如窗口大小改变、键盘输入等），在 `WindowsWindow` 类的回调函数里，事件对象 `event` 会被传递给 `m_Data.EventCallback`：
+
+```c++
+data.EventCallback(event);
+```
+
+- 这里的 `data.EventCallback` 就是之前通过 `SetEventCallback` 设置的回调函数，它指向了 `OnEvent`。
+- 因此，调用 `data.EventCallback(event)` 实际上等于调用 `Application::OnEvent(event)`。
+
+### 5. **回调的执行：**
+
+在 `Application::OnEvent` 中，事件被捕获后，通过 `EventDispatcher` 被进一步分发到具体的事件处理函数（例如 `OnWindowClose`）：
+
+```c++
+void Application::OnEvent(Event& e) {
+    EventDispatcher dispatcher(e);
+    dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+    AERITH_CORE_TRACE("{0}", e);
+}
+```
+
+### 总结：
+
+1. **`EventCallbackFn` 是函数类型：** 它是一个函数指针类型，指向一个接受 `Event&` 参数并返回 `void` 的函数。
+2. **回调存储：** `SetEventCallback` 将这个回调函数存储到 `m_Data.EventCallback` 中。
+3. **回调函数绑定：** `BIND_EVENT_FN(OnEvent)` 通过 `std::bind` 将 `Application::OnEvent` 方法与 `this` 绑定，并返回一个函数对象，存储在 `m_Data.EventCallback`。
+4. **回调执行：** 当事件发生时，`data.EventCallback(event)` 被调用，实际调用的是 `OnEvent(event)`。
+
+## 另外的回调函数(编写方式同理)
+
+```c++
+glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    WindowCloseEvent event;
+    data.EventCallback(event);
+});
+glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods) 
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    switch (action)
+    {
+        case GLFW_PRESS:
+        {
+            KeyPressedEvent event(key, 0);
+            data.EventCallback(event);
+            break;
+        }
+        case GLFW_RELEASE:
+        {
+            KeyReleasedEvent event(key);
+            data.EventCallback(event);
+            break;
+        }
+        case GLFW_REPEAT:
+        {
+            KeyPressedEvent event(key, 1);
+            data.EventCallback(event);
+            break;
+        }
+    }
+});
+glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    switch (action)
+    {
+        case GLFW_PRESS:
+        {
+            MouseButtonPressedEvent event(button);
+            data.EventCallback(event);
+            break; 
+        }
+        case GLFW_RELEASE:
+        {
+            MouseButtonReleasedEvent event(button);
+            data.EventCallback(event);
+            break;
+        }
+    }
+});
+glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xoffset, double yoffset)
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    MouseScrolledEvent event((float)xoffset, (float)yoffset);
+    data.EventCallback(event);
+});
+glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xpos, double ypos) 
+{
+    WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+    MouseMovedEvent event((float)xpos, (float)ypos);
+    data.EventCallback(event);
+});
+```
+
+# Layer

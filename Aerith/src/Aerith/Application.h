@@ -1,5 +1,7 @@
 #pragma once
 #include "Core.h"
+#include "Aerith/Window.h"
+#include "Events/ApplicationEvent.h"
 
 namespace Aerith
 {
@@ -11,6 +13,13 @@ namespace Aerith
 		virtual ~Application();
 
 		void Run();
+
+		void OnEvent(Event& e);
+
+		bool OnWindowClose(WindowCloseEvent& e);
+	private: 
+		std::unique_ptr<Window> m_Window;
+		bool m_Running = true;
 	};
 
 	// To be defined in CLINET

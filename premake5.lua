@@ -9,6 +9,11 @@ workspace "Aerith"
 	}
 
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+	-- include directories relative to root folder(solution directory)
+	IncludeDir = {}
+	IncludeDir["GLFW"] = "Aerith/vendor/GLFW/include"
+
+	include "Aerith/vendor/GLFW"
 
 	project "Aerith"
 		location "Aerith"
@@ -32,7 +37,14 @@ workspace "Aerith"
 		includedirs
 		{
 			"%{prj.name}/src",
-			"%{prj.name}/vendor/spdlog/include"
+			"%{prj.name}/vendor/spdlog/include",
+			"%{IncludeDir.GLFW}"
+		}
+
+		links
+		{
+			"GLFW",
+			"opengl32.lib"
 		}
 
 		filter "system:windows"

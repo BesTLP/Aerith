@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Aerith/Log.h"
 #ifdef AERITH_PLATFORM_WINDOWS
 #include "Windows.h"
 #endif // AERITH_PLATFORM_WINDOWS
