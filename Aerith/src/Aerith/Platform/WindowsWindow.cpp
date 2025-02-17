@@ -6,6 +6,7 @@
 #include "Aerith/Events/KeyEvent.h"
 #include "Aerith/Events/MouseEvent.h"
 
+#include "glad/glad.h"
 namespace Aerith
 {
 	static bool s_GLFWInitialized = false;
@@ -47,6 +48,9 @@ namespace Aerith
 
 		m_Window = glfwCreateWindow((int)m_Data.Width, (int)m_Data.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		glfwMakeContextCurrent(m_Window);
+		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+		AERITH_ASSERT(status, "Failed to initialize glad!!!");
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 

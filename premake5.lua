@@ -12,8 +12,10 @@ workspace "Aerith"
 	-- include directories relative to root folder(solution directory)
 	IncludeDir = {}
 	IncludeDir["GLFW"] = "Aerith/vendor/GLFW/include"
+	IncludeDir["Glad"] = "Aerith/vendor/Glad/include"
 
 	include "Aerith/vendor/GLFW"
+	include "Aerith/vendor/Glad"
 
 	project "Aerith"
 		location "Aerith"
@@ -38,13 +40,15 @@ workspace "Aerith"
 		{
 			"%{prj.name}/src",
 			"%{prj.name}/vendor/spdlog/include",
-			"%{IncludeDir.GLFW}"
+			"%{IncludeDir.GLFW}",
+			"%{IncludeDir.Glad}"
 		}
 
 		links
 		{
 			"GLFW",
-			"opengl32.lib"
+			"opengl32.lib",
+			"Glad",
 		}
 
 		filter "system:windows"
@@ -55,13 +59,14 @@ workspace "Aerith"
 			defines
 			{
 				"AERITH_PLATFORM_WINDOWS",
-				"AERITH_BUILD_DLL"
+				"AERITH_BUILD_DLL",
+				"GLFW_INCLUDE_NONE"
 			}
 
 			postbuildcommands
 			{
-				"{MKDIR} ../bin/" .. outputdir .. "/Sandbox",  -- ´´½¨Ä¿±êÎÄ¼þ¼Ð
-				"{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"  -- ¸´ÖÆÎÄ¼þ
+				"{MKDIR} ../bin/" .. outputdir .. "/Sandbox",  -- ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+				"{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"  -- ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
 			}
 
 
@@ -70,14 +75,17 @@ workspace "Aerith"
 
 	filter "configurations:Debug"
 		defines "AERITH_DEBUG"
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "AERITH_RELEASE"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "AERITH_DIST"
+		buildoptions "/MD"
 		optimize "On"
 
 project "Sandbox"
@@ -119,12 +127,15 @@ project "Sandbox"
 
 	filter "configurations:Debug"
 		defines "AERITH_DEBUG"
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "AERITH_RELEASE"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "AERITH_DIST"
+		buildoptions "/MD"
 		optimize "On"

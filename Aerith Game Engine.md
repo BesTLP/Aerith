@@ -1135,3 +1135,209 @@ glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xpos, double yp
 ```
 
 # Layer
+
+基本上可以看作是一个有序的图层列表或者图层堆栈，当你想要画东西的时候，Layer决定了事物的绘制顺序。在游戏引擎中，`Layer` 是一种用于组织不同功能模块的结构。它通常用于将游戏的不同部分分离成不同的层次（例如输入层、渲染层、UI层等），每一层都可以独立处理相关的任务，比如：
+
+- **渲染层**：负责绘制游戏画面。
+- **事件层**：处理输入事件或其他游戏事件。
+- **UI层**：处理用户界面及其交互。
+
+**事件处理顺序**：通常是从栈的后面（最上层）向前（最底层）进行的。原因是，事件通常应该先由最上面的 `Layer` 来处理，因为这层可能是UI层或弹出的窗口，它们通常是最需要响应事件的。事件处理从上层开始，可以避免底层的层捕获不该处理的事件。例如，如果用户点击了一个按钮，UI层应先接收到事件并处理，而不是底层的渲染层或游戏逻辑层。
+
+**渲染顺序**：渲染顺序通常是从栈的前面（底层）向后（最上层）。这也符合常规的图形渲染的逻辑。最底层的内容会先被渲染，随后上面的层覆盖下层内容。通常，最上层是UI层或一些动态元素，它们需要在最后渲染，以确保它们能显示在其他所有元素的上面。
+
+`Layer` 本身通常是一个基类，提供了一些基础功能，如事件响应和更新处理等。在具体实现中，可以继承 `Layer` 类并重写其方法来实现不同的功能。
+
+## `Layer` 类
+
+`Layer` 类提供了以下几个方法：
+
+- `OnAttach()`：当 `Layer` 被添加到 `LayerStack` 时调用。
+- `OnDetach()`：当 `Layer` 被移除时调用。
+- `OnUpdate()`：每一帧的更新逻辑。
+- `OnEvent(Event& event)`：处理事件（如键盘输入、鼠标点击等）。
+
+此外，`Layer` 类还保存了一个名字 `m_DebugName`，用于调试目的。
+
+```c++
+#pragma once
+
+#include "Aerith/Core.h"
+#include "Aerith/Events/Event.h"
+
+namespace Aerith
+{
+	class AERITH_API Layer
+	{
+	public:
+		Layer(const std::string& name = "Layer");
+		virtual ~Layer();
+
+		virtual void OnAttach() {}
+		virtual void OnDetach() {}
+		virtual void OnUpdate() {}
+		virtual void OnEvent(Event& event) {}
+	
+		inline const std::string& GetName() const { return m_DebugName; }
+	protected:
+		std::string m_DebugName;
+	};
+}
+```
+
+## `LayerStack` 类
+
+`LayerStack` 是一个层次结构容器，存储了多个 `Layer` 对象，提供了管理这些 `Layer` 的功能：
+
+- `PushLayer(Layer* layer)`：将一个普通的 `Layer` 推入栈中。
+- `PushOverlay(Layer* overlay)`：将一个叠加层（Overlay）推入栈中，通常用于UI层等总是需要放在最上层的层。
+- `PopLayer(Layer* layer)`：移除栈中的普通 `Layer`。
+- `PopOverlay(Layer* overlay)`：移除栈中的叠加层。
+
+`LayerStack` 使用一个 `std::vector<Layer*>` 来存储所有的层，并且用一个迭代器 `m_LayerInsert` 来标记插入点。
+
+```c++
+#pragma once
+#include "Aerith/Core.h"
+#include "Layer.h"
+#include <vector>
+
+namespace Aerith
+{
+	class AERITH_API LayerStack
+	{
+	public:
+		LayerStack();
+		~LayerStack();
+
+		void PushLayer(Layer* layer);
+		void PushOverlay(Layer* overlay);
+		void PopLayer(Layer* layer);
+		void PopOverlay(Layer* overlay);
+
+		std::vector<Layer*>::iterator begin() { return m_Layers.begin(); }
+		std::vector<Layer*>::iterator end() { return m_Layers.end(); }
+
+	private:
+		std::vector<Layer*> m_Layers;
+		std::vector<Layer*>::iterator m_LayerInsert;
+	};
+}
+#include "AerithPch.h"
+#include "LayerStack.h"
+
+namespace Aerith
+{
+	LayerStack::LayerStack()
+	{
+		m_LayerInsert = m_Layers.begin();
+	}
+
+	LayerStack::~LayerStack()
+	{
+		for (Layer* layer : m_Layers)
+		{
+			delete layer;
+		}
+	}
+
+	void LayerStack::PushLayer(Layer* layer)
+	{
+		m_LayerInsert = m_Layers.emplace(m_LayerInsert, layer);
+	}
+
+	// Overlay Always On the top.
+	void LayerStack::PushOverlay(Layer* overlay)
+	{
+		m_Layers.emplace_back(overlay);
+	}
+
+	void LayerStack::PopLayer(Layer* layer)
+	{
+		auto it = std::find(m_Layers.begin(), m_Layers.end(), layer);
+		if (it != m_Layers.end())
+		{
+			m_Layers.erase(it);
+			m_LayerInsert--;
+		}
+	}
+
+	void LayerStack::PopOverlay(Layer* overlay)
+	{
+		auto it = std::find(m_Layers.begin(), m_Layers.end(), overlay);
+		if (it != m_Layers.end())
+			m_Layers.erase(it);
+	}
+}
+
+```
+
+## Overlay和Layer
+
+**普通的 `Layer` 插入的位置永远是在叠加层之前**。这就是为什么我们需要区分 **普通层** 和 **叠加层** 的原因之一，也是为什么我们插入普通Layer的时候需要插入到`m_LayerInsert`而不是直接在末尾，所以即使你插入了一个普通的Layer，它也不会在Overlay的上层。
+
+叠加层总是保持在最上面，不会被其他层覆盖，这对于UI界面、弹窗、通知等非常重要。
+
+# Glad
+
+安装`Glad`，`version 4.6`
+
+```c++
+project "Glad"
+	kind "StaticLib"
+	language "C"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"include//glad/glad.h",
+		"include//KHR/khrplatform.h",
+		"src/glad.c"
+	}
+
+	includedirs
+	{
+		"include"
+	}
+	filter "system:windows"
+		systemversion "latest"
+		staticruntime "On" --staticly linking the runtime libraries
+
+
+	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "on"
+
+	filter "configurations:Release"
+		runtime "Release"
+		buildoptions "/MT"
+		optimize "on"
+```
+
+```c++
+workspace "Aerith"
+	architecture "x64"
+
+	configurations
+	{
+		"Debug",
+		"Release",
+		"Dist"
+	}
+
+	IncludeDir["Glad"] = "Aerith/vendor/Glad/include"
+	include "Aerith/vendor/Glad"
+
+		includedirs
+		{
+			"%{IncludeDir.Glad}"
+		}
+
+		links
+		{
+			"Glad",
+		}
+```
+
