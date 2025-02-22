@@ -1341,3 +1341,37 @@ workspace "Aerith"
 		}
 ```
 
+# Imgui
+
+### ImGui简介
+
+<font color='A2CD5A'>**ImGui**</font>（Immediate Mode GUI）是一个用于C++应用程序的即时模式图形用户界面（GUI）库，通常用于游戏引擎、调试工具和可视化软件。它由**Omar Cornut**开发，<font color='87CEFA'>**主要用于快速构建开发者工具，而不是用于最终用户界面。**</font>
+
+------
+
+## ImGui的特点
+
+1. **即时模式（Immediate Mode）**
+   - 与传统的**保留模式（Retained Mode）**GUI不同，ImGui不会存储UI组件的状态，而是<font color='87CEFA'>**每帧重新绘制界面**</font>。
+   - 这种模式使得**UI更新更直观**，无需管理复杂的UI状态。
+2. **轻量级和高效**
+   - ImGui的核心库非常小，不依赖任何外部库。
+   - 由于每帧绘制，省去了维护UI状态的开销，适用于**嵌入式调试工具**。
+3. **跨平台**
+   - 只需绑定到不同的渲染后端（如OpenGL、Vulkan、DirectX），ImGui即可在**Windows、Linux、MacOS**等平台运行。
+4. **易于集成**
+   - 可以很容易地嵌入现有的应用程序或游戏引擎中。
+   - 官方提供了与**SDL、GLFW、OpenGL、Vulkan、DirectX**等的绑定示例。
+5. **适用于调试和开发工具**
+   - 由于其即时模式的特性，它特别适合**游戏开发**中的调试界面、性能监视器、关卡编辑器等。
+
+------
+
+## **ImGui的核心概念**
+
+- **窗口（Window）**：一个可拖动、可调整大小的UI容器。
+- **控件（Widgets）**：按钮、滑动条、输入框等组件。
+- **状态（State）**：每帧重新绘制，不存储控件状态，需要程序手动管理。
+
+# Imgui Event
+

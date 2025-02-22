@@ -13,9 +13,11 @@ workspace "Aerith"
 	IncludeDir = {}
 	IncludeDir["GLFW"] = "Aerith/vendor/GLFW/include"
 	IncludeDir["Glad"] = "Aerith/vendor/Glad/include"
+	IncludeDir["ImGui"] = "Aerith/vendor/imgui"
 
 	include "Aerith/vendor/GLFW"
 	include "Aerith/vendor/Glad"
+	include "Aerith/vendor/imgui"
 
 	project "Aerith"
 		location "Aerith"
@@ -41,14 +43,16 @@ workspace "Aerith"
 			"%{prj.name}/src",
 			"%{prj.name}/vendor/spdlog/include",
 			"%{IncludeDir.GLFW}",
-			"%{IncludeDir.Glad}"
+			"%{IncludeDir.Glad}",
+			"%{IncludeDir.ImGui}"
 		}
 
 		links
 		{
 			"GLFW",
 			"opengl32.lib",
-			"Glad",
+			"ImGui",
+			"Glad"
 		}
 
 		filter "system:windows"

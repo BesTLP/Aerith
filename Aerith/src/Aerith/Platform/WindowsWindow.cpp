@@ -54,11 +54,17 @@ namespace Aerith
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 
+		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int keycode)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			KeyTypedEvent event(keycode);
+			data.EventCallback(event);
+		});
 		// typedef void (* GLFWwindowsizefun)(GLFWwindow* window, int width, int height);
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 		{
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-			data.Width = width;
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+				data.Width = width;
 			data.Height = height;
 
 			WindowResizeEvent event(width, height);
