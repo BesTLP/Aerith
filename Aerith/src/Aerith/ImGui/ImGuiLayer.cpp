@@ -159,21 +159,29 @@ namespace Aerith
         ImGui::ShowDemoWindow(&show);
         ImGui::Render();
 
+        // 清除帧缓冲，否则会有拖影
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
 	void ImGuiLayer::OnEvent(Event& event)
 	{
         EventDispatcher dispatcher(event);
+
+        // Mouse Event
         dispatcher.Dispatch<MouseButtonPressedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnMouseButtonPressedEvent));
         dispatcher.Dispatch<MouseButtonReleasedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnMouseButtonReleasedEvent));
         dispatcher.Dispatch<MouseMovedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnMouseMovedEvent));
         dispatcher.Dispatch<MouseScrolledEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnMouseScrolledEvent));
+         
+        // Key Event
         dispatcher.Dispatch<KeyPressedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnKeyPressedEvent));
         dispatcher.Dispatch<KeyReleasedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnKeyReleasedEvent));
-        dispatcher.Dispatch<WindowResizeEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnWindowResizeEvent));
-        dispatcher.Dispatch<WindowResizeEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnWindowResizeEvent));
         dispatcher.Dispatch<KeyTypedEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnKeyTypedEvent));
+
+        // Window Event
+        dispatcher.Dispatch<WindowResizeEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnWindowResizeEvent));
+        dispatcher.Dispatch<WindowResizeEvent>(AERITH_BIND_EVENT_FN(ImGuiLayer::OnWindowResizeEvent));
 	}
 
     bool ImGuiLayer::OnMouseButtonPressedEvent(MouseButtonPressedEvent& e)

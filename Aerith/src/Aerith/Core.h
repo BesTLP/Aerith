@@ -9,6 +9,11 @@
 	#error Only Support Windows Now.
 #endif // AERITH_PLATFORM_WINDOWS
 
+#ifdef AERITH_DEBUG
+	#define AERITH_ENABLE_ASSERTS
+#endif // AERITH_DEBUG
+
+
 #ifdef AERITH_ENABLE_ASSERTS	
 	#define AERITH_ASSERT(x, ...) {if(!(x)){AERITH_ERROR("Assertion Failed: {0}", __VA_ARGS__);__debugbreak();}}
 	#define AERITH_CORE_ASSERT(x, ...){if(!(x)){AERITH_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);__debugbreak();}}

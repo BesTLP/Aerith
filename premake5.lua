@@ -1,5 +1,6 @@
 workspace "Aerith"
 	architecture "x64"
+	startproject "Sandbox"
 
 	configurations
 	{
@@ -15,14 +16,17 @@ workspace "Aerith"
 	IncludeDir["Glad"] = "Aerith/vendor/Glad/include"
 	IncludeDir["ImGui"] = "Aerith/vendor/imgui"
 
-	include "Aerith/vendor/GLFW"
-	include "Aerith/vendor/Glad"
-	include "Aerith/vendor/imgui"
+	group "Dependencies"
+		include "Aerith/vendor/GLFW"
+		include "Aerith/vendor/Glad"
+		include "Aerith/vendor/imgui"
+	group ""
 
 	project "Aerith"
 		location "Aerith"
 		kind "SharedLib"
 		language "C++"
+		staticruntime "off"
 
 		targetdir("bin/" .. outputdir .. "/%{prj.name}")
 		objdir("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -57,7 +61,6 @@ workspace "Aerith"
 
 		filter "system:windows"
 			cppdialect "C++17"
-			staticruntime "On"
 			systemversion "latest"
 
 			defines
@@ -79,23 +82,24 @@ workspace "Aerith"
 
 	filter "configurations:Debug"
 		defines "AERITH_DEBUG"
-		buildoptions "/MDd"
+		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "AERITH_RELEASE"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "AERITH_DIST"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
+	staticruntime "off"
 
 		targetdir("bin/" .. outputdir .. "/%{prj.name}")
 		objdir("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -117,9 +121,9 @@ project "Sandbox"
 		{
 			"Aerith"
 		}
+
 		filter "system:windows"
 			cppdialect "C++17"
-			staticruntime "On"
 			systemversion "latest"
 
 			defines
@@ -131,15 +135,15 @@ project "Sandbox"
 
 	filter "configurations:Debug"
 		defines "AERITH_DEBUG"
-		buildoptions "/MDd"
+		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "AERITH_RELEASE"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "AERITH_DIST"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"

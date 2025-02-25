@@ -60,7 +60,6 @@ namespace Aerith
 			KeyTypedEvent event(keycode);
 			data.EventCallback(event);
 		});
-		// typedef void (* GLFWwindowsizefun)(GLFWwindow* window, int width, int height);
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 		{
 				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -145,6 +144,7 @@ namespace Aerith
 	{
 		glfwPollEvents();
 		glfwSwapBuffers(m_Window);
+
 
 	}
 
